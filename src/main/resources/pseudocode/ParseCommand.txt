@@ -1,0 +1,188 @@
+START
+Declarations
+String keyword = ""
+String quotedText = ""
+String file = ""
+String fullCommand = ""
+char[] commandChars = []
+int fullCommandLength = 0
+
+FUNCTION findWhiteSpaces(int start, char[] array, int end)
+    int count = 0
+
+    FOR int i = start, i TO end, STEP 1
+        IF array.contains(' ')
+            count++
+        ENDIF
+    ENDFOR
+
+    removeSpacesParsing(count, array, start) // ensure the white lines are removed at a certain point
+ENDFUNCTION
+
+FUNCTION removeSpacesParsing(int count, char[] array, int start)
+    // if .contains was used, will the program find all and remove white line one by one based on the count
+    FOR int i = start, i TO count,  STEP 1
+
+        // only remove white spaces
+        IF array.contains(' ')
+            array.remove(array[i])
+        ELSE
+            continue // skip non white space
+        ENDIF
+    ENDFOR
+
+ENDFUNCTION
+
+FUNCTION getFirstParameter(char[] commandChars) RETURN String
+    int firstQuoteIndex = commandChars.indexOf('"')
+    char[] fullCommand = []
+
+    // First parameter parse validation
+    IF commandChars.startsWith('"') OR commandChars[0] == '"'
+        Output "ERROR: Parsing error either due to an unexpected character or 'grep' is missing."
+        RETURN ""
+    ENDIF
+
+    FOR int i = 0, i TO commandChars, STEP1
+        // fetch the grep characters
+        fullCommand.add(commandChars[i])
+
+        IF commandChars[i] == ' ' THEN
+            CONTINUE
+        ENDIF
+
+        // Stop at the opening quote
+        IF i == firstQuoteIndex
+            BREAK
+        ENDIF
+    ENDFOR
+
+    String firstParam = fullCommand.join('')
+
+    RETURN firstParam
+ENDFUNCTION
+
+FUNCTION getSecondParam(char[] commandChars) RETURN String
+    int firstQuoteIndex = commandChars.indexOf('"')
+    int secondQuoteIndex = commandChars.indexOf('"', firstQuoteIndex + 1)
+    char[] fullText = []
+
+    /* fetch the text's characters including the white spaces or no spaces depending on the pattern,
+        and ignore quotation marks
+    */
+
+    /*
+        FIX: start after quotation and end before quotation
+        firstQuoteIndex + 1 - Index after the open quotation mark
+        secondQuoteIndex - 1 - Index before the close quotation mark
+    */
+
+    // Second parameter parsing validation, check for quotation marks
+    IF commandChars[firstQuote] != '"' AND commandChars[secondQuote] != '"'
+        RETURN ""
+    ENDIF
+
+    FOR int i = firstQuoteIndex + 1, i TO secondQuoteIndex - 1, STEP 1
+        fullText.add(commandChars[i])
+    ENDFOR
+
+    String secondParam = fullText.join('')
+
+    RETURN secondParam
+ENDFUNCTION
+
+FUNCTION getThirdParam(char[] commandChars) RETURN String
+    int openQuoteIndex = commandChars.indexOf('"')
+    int closeQuoteIndex = commandChars.indexOf('"', openQuoteIndex + 1)
+    int error = 0
+    char[] fullFile = []
+
+    // Edge Case: the file.txt is missing (validation)
+    TRY
+        // DECISION: Allow the loop to run and check if the file.txt is missing.
+        // If it is missing allow the program to throw an OutOfBounds Exception
+        FOR int i = closeQuote, i TO commandChars.length, STEP1
+            // From the first letter of the file to the last index of the full command
+            fullFile.add(commandChars[i])
+
+            // Skip white lines and get file name characters
+            IF commandChars[i] == ' '
+                CONTINUE
+            ENDIF
+
+            // Loop exits after final index
+        ENDFOR
+
+        String thirdParam = fullFile.join('')
+    CATCH (ArrayOutOfBoundsException)
+        Output "ERROR: The file that will be used to analyze is missing."
+        RETURN ""
+    FINALLY
+        Output "Program works as expected, but check for bugs."
+
+    RETURN thirdParam
+ENDFUNCTION
+
+FUNCTION Main()
+    // grep "Hello World" file.txt
+    Input fullCommand
+
+    FOR int i = 0, i TO fullCommand.length, STEP 1
+        // get each character if it does work like this
+        commandChars.add(fullCommand[i])
+    ENDFOR
+
+    // Parse full command
+    keyword = getFirstParameter(commandChars)
+    quotedText = getSecondParameter(commandChars)
+    file = getThirdParameter(commandChars)
+
+    // grep "Hello World" file.txt or grep 'Hello World' file.txt
+    Output keyword + " '" + quotedText + "' " + file
+ENDFUNCTION
+
+END
+
+/*
+A. I would assign the function in the parameter variables instead of the messy recursive cycle in v1.0.txt
+(code given earlier) and create small functions to extract each command.
+
+B. I will assign the function to the parameter variables.
+
+C. I realized that the white space parsing algorithm will not work. I will only get white spaces on characters before and after
+    quotation marks.
+*/
+
+/*
+1. grep "Hello" file.txt (preferred)
+
+2. grep "Hello World" file.txt (preferred)
+
+3. grep "Hello World"    file.txt
+
+4. grep "Hello World"
+
+5. grep "Hello World" file.txt extra.txt
+
+6. grep "" file.txt
+
+Added
+7. "" file.txt
+
+1. keyword: grep, pattern: "Hello", file: file.txt, result: 4: Hello (Correct)
+
+2. keyword: grep, pattern: "Hello World", file: file.txt, result: 6: Hello World (Correct)
+
+3. keyword: grep, pattern: "Hello", file:    file.txt, result: ERROR: Error! (Error)
+
+4. keyword: grep, pattern: "Hello World", file: "" || null, result: ERROR: Error! (Error)
+
+5. keyword: grep, pattern: "Hello World", file: [file.txt, extra.txt],
+result: file.txt \n 8: Hello World \n\n extra.txt \n 12: Hello World
+(Could be possible, implement later if neccessary to analyze more than one file)
+
+6 . keyword: grep, pattern: "", file: file.txt, result: No results
+(Allowed but no results will be returned even if the file is empty)
+
+7. keyword: null, pattern: "Hello", file: file.txt, result: ERROR: Error! (Error)
+*/

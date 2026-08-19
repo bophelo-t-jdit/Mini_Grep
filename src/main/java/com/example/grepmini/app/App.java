@@ -1,0 +1,71 @@
+package com.example.grepmini.app;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+public class App {
+    static ArrayList<String> separateCommand(ArrayList<Character> chars) {
+        ArrayList<Character> newChars = new ArrayList<Character>();
+        ArrayList<String> splitWords = new ArrayList<String>();
+
+        // Split full command text
+        for (int i = 0; i < chars.size(); i++) {
+            // Take each character until reaching space (assuming it is a part of the full command)
+            newChars.add(chars.get(i));
+
+            // Find the index of the first white line
+            int firstWhiteLine = chars.indexOf(' ');
+
+            // Stops loop when reaching the white line index
+            if (i == firstWhiteLine) {
+                break;
+            }
+        }
+
+        // Join the word characters
+        String joinWord = newChars.stream()
+                .map(String::valueOf).collect(Collectors.joining());
+
+        // Add the whole word to the split words array
+        splitWords.add(joinWord);
+
+        // Clean newChars array
+        for (int i = 0; i < newChars.size(); i++) {
+            newChars.remove(newChars.get(i));
+        }
+
+        // Remove chars already used
+        for (int i = 0; i < chars.size(); i++) {
+            int whiteLine = chars.indexOf(' ');
+
+            // remove until the quote index or next word character index
+            chars.remove(chars.get(i));
+
+            // Check if current step is at the quote or character
+            if (i == whiteLine + 1) {
+                break;
+            }
+        }
+
+        // repeat
+        if (!chars.isEmpty()) {
+            separateCommand(chars);
+        }
+
+        return splitWords;
+    }
+
+    public void start() {
+        Scanner input = new Scanner(System.in);
+        ArrayList<String> fullCommandChars = new ArrayList<String>();
+        ArrayList<String> splitCommands = null;
+
+        System.out.println("\n");
+
+        // Receive command input
+        String fullCommand = input.nextLine();
+
+        // ming "hj" file.txt
+    }
+}
