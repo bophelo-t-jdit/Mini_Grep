@@ -7,54 +7,20 @@ String fullCommand = ""
 char[] commandChars = []
 int fullCommandLength = 0
 
-FUNCTION findWhiteSpaces(int start, char[] array, int end)
-    int count = 0
-
-    FOR int i = start, i TO end, STEP 1
-        IF array.contains(' ')
-            count++
-        ENDIF
-    ENDFOR
-
-    removeSpacesParsing(count, array, start) // ensure the white lines are removed at a certain point
-ENDFUNCTION
-
-FUNCTION removeSpacesParsing(int count, char[] array, int start)
-    // if .contains was used, will the program find all and remove white line one by one based on the count
-    FOR int i = start, i TO count,  STEP 1
-
-        // only remove white spaces
-        IF array.contains(' ')
-            array.remove(array[i])
-        ELSE
-            continue // skip non white space
-        ENDIF
-    ENDFOR
-
-ENDFUNCTION
 
 FUNCTION getFirstParameter(char[] commandChars) RETURN String
     int firstQuoteIndex = commandChars.indexOf('"')
     char[] fullCommand = []
 
-    // First parameter parse validation
-    IF commandChars.startsWith('"') OR commandChars[0] == '"'
-        Output "ERROR: Parsing error either due to an unexpected character or 'grep' is missing."
-        RETURN ""
-    ENDIF
-
-    FOR int i = 0, i TO commandChars, STEP1
-        // fetch the grep characters
-        fullCommand.add(commandChars[i])
-
+    FOR int i = 0, i TO firstQuoteIndex - 1, STEP1 // Stop at the index before open quote, should be at least one space
+        // Skip spaces
         IF commandChars[i] == ' ' THEN
             CONTINUE
         ENDIF
 
-        // Stop at the opening quote
-        IF i == firstQuoteIndex
-            BREAK
-        ENDIF
+        // fetch the grep characters
+        fullCommand.add(commandChars[i])
+
     ENDFOR
 
     String firstParam = fullCommand.join('')
@@ -98,27 +64,27 @@ FUNCTION getThirdParam(char[] commandChars) RETURN String
     char[] fullFile = []
 
     // Edge Case: the file.txt is missing (validation)
-    TRY
-        // DECISION: Allow the loop to run and check if the file.txt is missing.
-        // If it is missing allow the program to throw an OutOfBounds Exception
-        FOR int i = closeQuote, i TO commandChars.length, STEP1
-            // From the first letter of the file to the last index of the full command
-            fullFile.add(commandChars[i])
+    // DECISION: Allow the loop to run and check if the file.txt is missing.
+    // If it is missing allow the program to throw an OutOfBounds Exception
+    FOR int i = closeQuoteIndex + 1, i TO commandChars.length, STEP1 // Start at the index after close quote, should be at least one space
+        IF i == commandChars.length
+            RETURN ""
+            BREAK
+        ENDIF
 
-            // Skip white lines and get file name characters
-            IF commandChars[i] == ' '
-                CONTINUE
-            ENDIF
+        // Skip white lines and get file name characters
+        IF commandChars[i] == ' '
+            CONTINUE
+        ENDIF
 
-            // Loop exits after final index
-        ENDFOR
+        // From the first letter of the file to the last index of the full command
+        fullFile.add(commandChars[i])
 
-        String thirdParam = fullFile.join('')
-    CATCH (ArrayOutOfBoundsException)
-        Output "ERROR: The file that will be used to analyze is missing."
-        RETURN ""
-    FINALLY
-        Output "Program works as expected, but check for bugs."
+        // Loop exits after final index
+    ENDFOR
+
+    String thirdParam = fullFile.join('')
+
 
     RETURN thirdParam
 ENDFUNCTION
